@@ -14,14 +14,14 @@ if ($conn->connect_error) {
 }
 
 // Consulta SQL para recuperar los datos
-$sql = "SELECT Temperatura, Presion, Humedad FROM Temp_Press_Hum";
+$sql = "SELECT Temperatura, Presion, Humedad, Fecha FROM Temp_Press_Hum";
 $result = $conn->query($sql);
 
 // Mostrar los datos en formato HTML
 if ($result->num_rows > 0) {
     // Output data of each row
     while($row = $result->fetch_assoc()) {
-        echo "Temperatura: " . $row["Temperatura"]. " - Presion: " . $row["Presion"]. " - Humedad: " . $row["Humedad"]. "<br>";
+	echo "Fecha y hora: " . $row["Fecha"] . " Temperatura: " . $row["Temperatura"]. "ºC - Presion: " . $row["Presion"]. "hPa - Humedad: " . $row["Humedad"]. "%<br>";
     }
 } else {
     echo "0 resultados";
