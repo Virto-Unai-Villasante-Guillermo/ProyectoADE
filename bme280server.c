@@ -5,9 +5,9 @@
 // /_/ |_/____/___/   //
 //********************//
 //!
-//! \file: udp-server.c
-//! \brief: UDP server sample
-//! \author: Jose Luis Unibaso
+//! \file: bme280server.c
+//! \brief: Read from bme80 server, create local UDP server to send commands and update an online database.
+//! \author: Unai Virto & Guillermo Villasante
 
 /********************** Include Files **************************/
 #include <arpa/inet.h>
@@ -16,17 +16,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdint.h>
 #include "bme280.h"
+#include <mysql/mysql.h>
 
 
 /********************* Type Definitions ************************/
 /******************* Constant Definitions **********************/
 #define SERVER_PORT 5000
 #define BUFFSIZE 1024
-// delay between samples in microseconds
-#define DELAY 1000000
 
 /*********** Macros (Inline Functions) Definitions *************/
 /******************* Variable Definitions **********************/
@@ -45,7 +43,19 @@ int main(void) {
     struct sockaddr_in serveraddr, clientaddr;
     int i;
 	int T, P, H; // calibrated values
+    
+    //Para el acceso a la base de datos
+    MYSQL *conn;
 
+    char *server = "localhost";
+    char *user = "unai";
+    char *password = "1221";
+    char *database = "BME280";
+    int start = 0;
+    char mensajelive[1024];
+    
+    conn = mysql_init(NULL);
+    
     // Configure the GPIOs
     //configGPIO();
 
@@ -61,6 +71,12 @@ int main(void) {
 	{
 		return -1; // problem - quit
 	}
+    
+    //Conectarse a la base de datos
+    if(!mysql_real_connect(conn,server,user,password,database,0,NULL,0)){
+        fprintf(stderr,"%s\n",mysql_error(conn));
+        return -1;
+    }
 
     len = sizeof(clientaddr);
 
@@ -76,15 +92,16 @@ int main(void) {
     printf("Listening for incoming messages...\n\n");
 
     // Start listening:
-    while (1) {
+    while (1) {;
+        //Borra mensaje anterior
         memset(buffer,'\0',sizeof(buffer));
         //Recibe mensaje
-        num = recvfrom(sock, buffer, BUFFSIZE, MSG_WAITALL,
-                       (struct sockaddr *)&clientaddr, &len);
-        
+        if(start==0){
+            num = recvfrom(sock, buffer, BUFFSIZE, MSG_WAITALL,
+                        (struct sockaddr *)&clientaddr, &len);
+        }
         //Lee sensor
         bme280ReadValues(&T, &P, &H);
-        
         //Analiza mensaje recibido
         if (strcmp(buffer,"temp")==0) {
             //Construye String con valor de temperatura calibrado
@@ -103,12 +120,31 @@ int main(void) {
             sendto(sock, &respuesta, strlen(respuesta), MSG_CONFIRM,
                (struct sockaddr *)&clientaddr, len);
         }
+        else if (strcmp(buffer,"stop")==0){
+            start=0;
+            mysql_close(conn);
+        }
+        else if (strcmp(buffer,"live")==0 | start==1){
+            
+            //Flag de que se ha pedido muestrear
+            start=1;
+
+            //Enviar query
+            sprintf(mensajelive,"INSERT INTO Temp_Press_Hum (Temperatura,Presion,Humedad) VALUES ('%.2f','%.6f','%.6f')",(float)T/100.0,(float)P/256.0,(float)H/1024.0);
+            if(mysql_query(conn,mensajelive)!=0) {
+                fprintf(stderr,"Error al ejecutar la consulta: %s\n",mysql_error(conn));
+                mysql_close(conn);
+                return 0;
+            }
+            
+            //Delay de 1 segundo
+            sleep(1);
+        }
         else if (strcmp(buffer,"close")==0) {
             break;
         }
 
         inet_ntop(AF_INET, &(clientaddr.sin_addr), str, INET_ADDRSTRLEN);
-
         printf("New message from %s:%d -- %s\n", str, ntohs(clientaddr.sin_port), buffer);
                 // Send echo back:
         sendto(sock, &buffer, strlen(buffer), MSG_CONFIRM,
@@ -116,4 +152,5 @@ int main(void) {
     }
 
     close(sock);
+    mysql_close(conn);
 }
