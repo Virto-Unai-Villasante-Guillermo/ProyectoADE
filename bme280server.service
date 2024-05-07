@@ -4,8 +4,8 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/home/ADE-MASTER/Desktop/pruebasbme280/prueba2
-Restart=no
+ExecStart=/home/ADE-MASTER/Desktop/proyecto/sql
+Restart=yes
 
 [Install]
 WantedBy=multi-user.target

@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <bme280.h>
 
 static int file_i2c = 0;
 // Sensor calibration data
