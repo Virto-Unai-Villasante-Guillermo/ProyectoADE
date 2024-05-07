@@ -21,10 +21,10 @@ echo "<br />Temperatura = $Temperatura ºC<br />";
 echo "<br />Humedad = $Humedad %<br />";
 
 // Conexión a la base de datos
-$servername = "localhost"; // Cambia esto por la dirección de tu servidor de base de datos
-$username = "unai"; // Cambia esto por el nombre de usuario de tu base de datos
-$password = "1221"; // Cambia esto por la contraseña de tu base de datos
-$database = "BME280"; // Cambia esto por el nombre de tu base de datos
+$servername = "localhost"; 
+$username = "unai";
+$password = "1221";
+$database = "BME280";
 
 // Crear conexión
 $conn = new mysqli($servername, $username, $password, $database);
