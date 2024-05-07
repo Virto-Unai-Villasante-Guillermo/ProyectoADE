@@ -29,6 +29,8 @@ Por último, el archivo bme280server.service permite crear un servicio que se ar
 Finalizado
 
 ## Instalación
-Compila el archivo ejecutable con el Makefile
-Copia los archivos .php en el directorio /var/www/html/
-Copia el archivo bme280server.service en /etc/systemd/system/
+1. Compila el archivo ejecutable con el Makefile.
+
+2. Copia los archivos .php en el directorio /var/www/html/
+
+3. Copia el archivo bme280server.service en /etc/systemd/system/
